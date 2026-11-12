@@ -9,9 +9,13 @@ import {
   ORDER_LABEL,
 } from "@/lib/config";
 import ReceiptActions from "@/app/components/ReceiptActions";
+import DeleteTransactionButton from "@/app/components/DeleteTransactionButton";
+import { getSession } from "@/lib/session";
+import { fmtDateTime } from "@/lib/time";
 
 async function Struk({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
+  const session = await getSession();
 
   const trx = await prisma.transaction.findUnique({
     where: { code },
@@ -19,10 +23,7 @@ async function Struk({ params }: { params: Promise<{ code: string }> }) {
   });
   if (!trx) notFound();
 
-  const tanggal = trx.createdAt.toLocaleString("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  const tanggal = fmtDateTime(trx.createdAt);
   const metode = METHOD_LABEL[trx.paymentMethod] ?? trx.paymentMethod;
   const tipe = ORDER_LABEL[trx.orderType] ?? trx.orderType;
 
@@ -97,6 +98,7 @@ async function Struk({ params }: { params: Promise<{ code: string }> }) {
       </div>
 
       <ReceiptActions waText={waText} />
+      {session?.role === "ADMIN" && <DeleteTransactionButton code={trx.code} />}
     </div>
   );
 }

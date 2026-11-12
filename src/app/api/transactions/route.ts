@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
+import { dateStr, todayStart } from "@/lib/time";
 
 type ItemInput = { menuId: number; qty: number; note?: string };
 type Body = {
@@ -71,28 +73,26 @@ export async function POST(req: Request) {
   if (!Number.isFinite(paid) || paid < total) return fail("Uang yang dibayar kurang");
   const change = paid - total;
 
-  // Sementara belum ada login: pakai akun kasir dari seed
-  const user =
-    (await prisma.user.findUnique({ where: { username: "kasir" } })) ??
-    (await prisma.user.findFirst());
-  if (!user) return fail("Belum ada pengguna. Jalankan seed dulu.", 500);
+  const session = await getSession();
+  if (!session) return fail("Sesi habis, silakan login lagi", 401);
 
   // Kode transaksi: TRX-YYYYMMDD-001, nomor urut per hari
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const todayCount = await prisma.transaction.count({
-    where: { createdAt: { gte: startOfDay } },
+  const ymd = dateStr(todayStart()).replace(/-/g, "");
+  const prefix = `TRX-${ymd}-`;
+  const todays = await prisma.transaction.findMany({
+    where: { code: { startsWith: prefix } },
+    select: { code: true },
   });
-  const ymd =
-    String(now.getFullYear()) +
-    String(now.getMonth() + 1).padStart(2, "0") +
-    String(now.getDate()).padStart(2, "0");
-  const code = `TRX-${ymd}-${String(todayCount + 1).padStart(3, "0")}`;
+  const lastNo = todays.reduce(
+    (max, t) => Math.max(max, Number(t.code.slice(prefix.length)) || 0),
+    0
+  );
+  const code = `${prefix}${String(lastNo + 1).padStart(3, "0")}`;
 
   const trx = await prisma.transaction.create({
     data: {
       code,
-      userId: user.id,
+      userId: session.userId,
       orderType,
       tableNo: orderType === "DINE_IN" && body.tableNo?.trim() ? body.tableNo.trim() : null,
       subtotal,
