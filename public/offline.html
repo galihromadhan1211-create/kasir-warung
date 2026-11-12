@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f97316" />
+    <title>Tidak ada koneksi</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #fafafa;
+        color: #171717;
+        text-align: center;
+        padding: 24px;
+      }
+      .box { max-width: 320px; }
+      .icon { font-size: 56px; }
+      h1 { font-size: 22px; margin: 12px 0 8px; }
+      p { color: #525252; line-height: 1.5; margin: 0 0 20px; }
+      button {
+        background: #f97316;
+        color: #fff;
+        border: 0;
+        border-radius: 12px;
+        padding: 14px 24px;
+        font-size: 17px;
+        font-weight: 700;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <div class="icon">📡</div>
+      <h1>Tidak ada koneksi</h1>
+      <p>
+        Aplikasi kasir belum bisa terhubung ke server. Periksa WiFi atau
+        data seluler, lalu coba lagi.
+      </p>
+      <button onclick="location.reload()">Coba lagi</button>
+    </div>
+  </body>
+</html>

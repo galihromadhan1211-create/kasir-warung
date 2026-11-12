@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  username     String        @unique
+  password     String // hasil hash bcrypt, jangan simpan teks asli
+  role         String        @default("KASIR") // "ADMIN" | "KASIR"
+  createdAt    DateTime      @default(now())
+  transactions Transaction[]
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  menus Menu[]
+}
+
+model Menu {
+  id         Int               @id @default(autoincrement())
+  categoryId Int
+  name       String
+  price      Int // dalam rupiah, tanpa desimal
+  image      String?
+  available  Boolean           @default(true) // false = habis
+  createdAt  DateTime          @default(now())
+  category   Category          @relation(fields: [categoryId], references: [id])
+  items      TransactionItem[]
+}
+
+model Transaction {
+  id            Int               @id @default(autoincrement())
+  code          String            @unique // contoh: TRX-20261025-001
+  userId        Int
+  orderType     String            @default("DINE_IN") // "DINE_IN" | "TAKEAWAY"
+  tableNo       String?
+  subtotal      Int
+  discount      Int               @default(0)
+  total         Int
+  paymentMethod String // "CASH" | "QRIS" | "TRANSFER"
+  paid          Int
+  change        Int               @default(0)
+  createdAt     DateTime          @default(now())
+  user          User              @relation(fields: [userId], references: [id])
+  items         TransactionItem[]
+}
+
+model TransactionItem {
+  id            Int         @id @default(autoincrement())
+  transactionId Int
+  menuId        Int?
+  menuName      String // disalin agar riwayat tidak berubah saat menu diedit
+  price         Int // harga saat transaksi
+  qty           Int
+  note          String?
+  subtotal      Int
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  menu          Menu?       @relation(fields: [menuId], references: [id], onDelete: SetNull)
+}
+
+model Expense {
+  id        Int      @id @default(autoincrement())
+  title     String
+  category  String
+  amount    Int
+  date      DateTime
+  createdAt DateTime @default(now())
+}
